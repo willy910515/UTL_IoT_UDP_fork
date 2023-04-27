@@ -34,7 +34,7 @@ class Uart_Read:
 
                 packet = decode_data(data)
                 print(len(packet))
-                if packet[0:3] == "$0C" or "$4C": # 辨識封包是否為手環封包
+                if len(packet) == 233:                      # 辨識封包是否為手環封包
                     s.sendto(packet.encode(), server_addr)  #由socket-UDP傳送
                     # with open('record.txt', 'a') as f: # 紀錄所傳送的每一條封包
                     #     f.writelines(packet)

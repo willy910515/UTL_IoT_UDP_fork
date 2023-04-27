@@ -12,7 +12,6 @@ PORT = 8001 # port值可不變更
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.bind((HOST, PORT))
 
-
 print('server start at: {}{}'.format(HOST, PORT))
 print('wait for connection...')
 
@@ -33,41 +32,15 @@ def twosComplement_hex(hexval):
         val -= 1 << bits
     return val
 
-def mileageIdentify(raw_data, state):
-    if state == 1:
-        mileage = int((raw_data[63:65] + raw_data[61:63]),16)/1000
-        return mileage
-    elif state == 2:
-        mileage = int((raw_data[61:63] + raw_data[63:65]),16)/1000
-        return mileage
-    else:
-        return "error"
-    
-def caloriesIdentify(raw_data, state):
-    if state == 1:
-        calories = int((raw_data[69:71] + raw_data[67:69]),16)
-        return calories
-    elif state == 2:
-        calories = int((raw_data[67:69] + raw_data[69:71]),16)
-        return calories
-    else:
-        return "error"
-
-def stepIdentify(raw_data, state):
-    if state == 1:
-        step = int((raw_data[59:61] + raw_data[57:59]),16)
-        return step
-    elif state == 2:
-        step = int((raw_data[57:59] + raw_data[59:61]),16)
-        return step
-    else:
-        return "error"
 
 def tmpIdentify(raw_data, state):
     if state == 1:
         tmp = str(int(raw_data[71:73],16))+str(int(raw_data[73:75],16))
         return tmp
     elif state == 2:
+        tmp = str(int(raw_data[71:75],16))
+        return tmp
+    elif state == 3:
         tmp = str(int(raw_data[71:75],16))
         return tmp
     else:
@@ -92,7 +65,7 @@ while True:
         
         band_Mac = raw_data[5:17]
         safe_Mac = raw_data[189:201]
-        state = int(raw_data[97:99],16) # 1為舊手環, 2為新手環
+        state = int(raw_data[97:99],16) # 1為舊手環, 2為新手環, 3為蓋德
         tmp = tmpIdentify(raw_data, state)
         sleep = int(raw_data[87:89],16)*60 + int(raw_data[89:91],16)
         raw_data_document = {
@@ -114,12 +87,12 @@ while True:
             # 'Alertvalue' : int(raw_data[39:51],16),
             #-----------------手環生理訊號--------------------
             'HR' : int(raw_data[51:53],16),
-            'Bloodpressure_DBP' : int((raw_data[53:55]),16),
-            'Bloodpressure_SBP' : int((raw_data[55:57]),16),
-            'Step' : stepIdentify(raw_data, state),
-            'Mileage' : mileageIdentify(raw_data, state),
+            'Bloodpressure_SBP' : int((raw_data[53:55]),16),
+            'Bloodpressure_DBP' : int((raw_data[55:57]),16),
+            'Step' : int((raw_data[57:59] + raw_data[59:61]),16),
+            'Mileage' : int((raw_data[61:63] + raw_data[63:65]),16)/1000,
             'Blood_oxygen' : int((raw_data[65:67]),16),
-            'Calories' : caloriesIdentify(raw_data, state),
+            'Calories' : int((raw_data[67:69] + raw_data[69:71]),16),
             'band_battery' : int(raw_data[85:87],16),
             'Temperature' : tmp[0:2] + '.' + tmp[2:4], # 體溫
             'Sleep' : sleep, # 單位:min
