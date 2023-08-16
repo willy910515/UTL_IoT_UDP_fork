@@ -71,7 +71,7 @@ while True:
         raw_data_document = {
             # 協定換算方式:ex 血壓35~36 => 35*2-1=69 => 所以血壓的位置位於raw_data的第69個，有4個bytes，69~72為血壓的判讀區域，剩下的以此類推。
             'Time' : time,
-            'safe_sos' : judgeState(raw_data), #確認封包狀態
+            'state' : judgeState(raw_data), #確認封包狀態
             'raspberry_Mac' : raw_data[-2:],
             'safe_Mac' : raw_data[189:201],
             'safe_battery': int(raw_data[201:203],16),
@@ -118,7 +118,7 @@ while True:
             'MAG_Z' : twosComplement_hex(raw_data[157:161]),
             'MAG_total' : twosComplement_hex(raw_data[161:165]),
             'Press_16' : (twosComplement_hex(raw_data[165:169])+80000)/100,
-            'Temp' : twosComplement_hex(raw_data[169:173])*0.0625, #環境溫度
+            'Ambient temperature' : twosComplement_hex(raw_data[169:173])*0.0625, #環境溫度
             'Azimuth16' : twosComplement_hex(raw_data[175:179]),
             'Direction' : int(raw_data[179:181],16), #方位
             'RSSI' : twosComplement_hex(raw_data[181:185]), #護身符與Beacon的距離
