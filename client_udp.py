@@ -53,7 +53,7 @@ class Uart_Read:
                         self.state = 1 # 將狀態切換至用餐
                         print("用餐")
                         
-                    elif area_position != 1 and posture == 9 and self.state == 1:
+                    elif area_position != 1 and posture == 2 and self.state == 1:
                         """"""
                         self.mqtt.send_message(safe_mac,"stop")
                         self.state = 0 #將狀態切換至結束
