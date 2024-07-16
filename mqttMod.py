@@ -46,7 +46,7 @@ class MQTTMOD(QtCore.QThread):
     def send_message(self,MacAddress,message):
         
         publish.single(
-          topic=f"Food/{MacAddress}/Camera",
+          topic=f"Food/{MacAddress}/Camera",#Food/F05ECD2ABE8D/Camera
           payload= message,
           hostname="114.32.9.225",
           
