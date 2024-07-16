@@ -25,6 +25,7 @@ class Uart_Read:
         self.write_queue = write_queue
         self.ser = ser
         self.if_upload = False
+        self.state = 0 #用來鎖定相機觸發
         self.mqtt = MQTTMOD()
         self.mqtt.start()
     def run(self):
