@@ -26,6 +26,7 @@ class Uart_Read:
         self.ser = ser
         self.if_upload = False
         self.mqtt = MQTTMOD()
+        self.mqtt.start()
     def run(self):
         while True:
             try:
@@ -56,7 +57,7 @@ class Uart_Read:
 
                     time.sleep(.03)
             except:
-                print('error')
+                print('run error')
     # 緊急封包判斷
     def judgeState(self,raw_data):
         if raw_data[0:3] == '$0C': #一般封包$0C
@@ -86,7 +87,7 @@ class Uart_Read:
             tmp = str(int(raw_data[71:75],16))
             return tmp
         else:
-            return "error"
+            return "tmpIdentify error"
     def decode_json(self,indata):
         """"""
         raw_data = indata.decode()
