@@ -56,8 +56,8 @@ class Uart_Read:
 
 
                     time.sleep(.03)
-            except:
-                print('run error')
+            except Exception as e:
+                print(e)
     # 緊急封包判斷
     def judgeState(self,raw_data):
         if raw_data[0:3] == '$0C': #一般封包$0C
