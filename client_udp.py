@@ -45,6 +45,8 @@ class Uart_Read:
                     area_position = json_pakage["Area"]
                     posture = json_pakage["Posture_state"]
                     safe_mac = json_pakage["safe_Mac"]
+                    print("="*10)
+                    print(f"Posture:{posture}"+"="*5+f"Area:{area_position}")
                     if area_position == 1 and posture == 1 and self.state == 0:# 
                         self.mqtt.send_message(safe_mac,"shot")
                         self.state = 1 # 將狀態切換至用餐
@@ -68,7 +70,7 @@ class Uart_Read:
             return safe_sos
         
     # 將十六進制的值轉為有正負號的十進制值
-    def selftwosComplement_hex(self,hexval):
+    def twosComplement_hex(self,hexval):
         bits = 16 # Number of bits in a hexadecimal number format
         val = int(hexval, bits)
         if val & (1 << (bits-1)):
@@ -90,7 +92,7 @@ class Uart_Read:
             return "tmpIdentify error"
     def decode_json(self,indata):
         """"""
-        raw_data = indata.decode()
+        raw_data = indata
         
         band_Mac = raw_data[5:17]
         safe_Mac = raw_data[189:201]
