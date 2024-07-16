@@ -47,16 +47,17 @@ class Uart_Read:
                     posture = json_pakage["Posture_state"]
                     safe_mac = json_pakage["safe_Mac"]
                     print("="*10)
-                    print(f"Posture:{posture}"+"="*5+f"Area:{area_position}")
+                    print(f"Posture:{posture}"+"="*5+f"Area:{area_position}"+"="*5+f"Mac:{safe_mac}")
                     if area_position == 1 and posture == 1 and self.state == 0:# 
                         self.mqtt.send_message(safe_mac,"shot")
                         self.state = 1 # 將狀態切換至用餐
+                        print("用餐")
                         
                     elif area_position != 1 and posture == 9 and self.state == 1:
                         """"""
                         self.mqtt.send_message(safe_mac,"stop")
                         self.state = 0 #將狀態切換至結束
-
+                        print("結束")
 
                     time.sleep(.03)
             except Exception as e:
