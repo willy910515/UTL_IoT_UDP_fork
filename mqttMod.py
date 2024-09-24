@@ -16,7 +16,7 @@ class MQTTMOD(QtCore.QThread):
 
             self.client = mqtt.Client()
             self.client.username_pw_set(username="utl_food",password="utl2041")
-            self.client.connect("114.32.9.225", 1883, 60)
+            self.client.connect("114.34.73.26", 1883, 60)
             self.client.on_connect = self.on_connect
             self.client.on_message = self.on_message
             
@@ -48,7 +48,7 @@ class MQTTMOD(QtCore.QThread):
         publish.single(
           topic=f"Food/{MacAddress}/Camera",#Food/F05ECD2ABE8D/Camera
           payload= message,
-          hostname="114.32.9.225",
+          hostname="114.34.73.26",
           
           port=1883,
           auth={'username':'utl_food','password':'utl2041'})
