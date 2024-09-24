@@ -7,7 +7,7 @@ import socket
 ser = serial.Serial('/dev/ttyAMA0', 115200)    #Open port with baud rate
 uart_read_queue = queue.Queue(maxsize=50)
 uart_write_queue = queue.Queue()
-HOST = 'IP' #serverIP
+HOST = '114.34.73.26' #serverIP
 PORT = 8001 #server port
 
 server_addr = (HOST, PORT)

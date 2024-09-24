@@ -6,7 +6,7 @@ from dateutil import parser
 mogoClient = MongoClient('mongodb://localhost:27017/') # 可替換資料庫URL
 
 
-HOST = 'IP' # 此處IP要隨著server的網路位置做變更
+HOST = '114.34.73.26' # 此處IP要隨著server的網路位置做變更
 PORT = 8001 # port值可不變更
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
