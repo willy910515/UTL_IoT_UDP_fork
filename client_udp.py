@@ -9,7 +9,6 @@ uart_read_queue = queue.Queue(maxsize=50)
 uart_write_queue = queue.Queue()
 HOST = '114.34.73.26' #serverIP
 PORT = 8001 #server port
-
 server_addr = (HOST, PORT)
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -46,8 +45,9 @@ class Uart_Read:
                     area_position = json_pakage["Area"]
                     posture = json_pakage["Posture_state"]
                     safe_mac = json_pakage["safe_Mac"]
+                    press = json_package["tmp"]
                     print("="*10)
-                    print(f"Posture:{posture}"+"="*5+f"Area:{area_position}"+"="*5+f"Mac:{safe_mac}")
+                    print(f"Posture:{posture}"+"="*5+f"Area:{area_position}"+"="*5+f"Mac:{safe_mac}+Press_16:{press}")
                     if area_position == 1 and posture == 1 and self.state == 0:# 
                         self.mqtt.send_message(safe_mac,"shot")
                         self.state = 1 # 將狀態切換至用餐
@@ -150,7 +150,7 @@ class Uart_Read:
             'MAG_Y' : self.twosComplement_hex(raw_data[153:157]),
             'MAG_Z' : self.twosComplement_hex(raw_data[157:161]),
             'MAG_total' : self.twosComplement_hex(raw_data[161:165]),
-            'Press_16' : (self.twosComplement_hex(raw_data[165:169])+80000)/100,
+            'Press_16' : (self.twosComplement_hex(raw_data[165:169])+80000),
             'Ambient temperature' : self.twosComplement_hex(raw_data[169:173])*0.0625, #環境溫度
             'Azimuth16' : self.twosComplement_hex(raw_data[175:179]),
             'Direction' : int(raw_data[179:181],16), #方位
