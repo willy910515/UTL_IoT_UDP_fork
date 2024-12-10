@@ -42,16 +42,20 @@ class MQTTMOD(QtCore.QThread):
         if msg.payload.decode('utf-8') == 'shot':
             self.control.emit('shot')
         elif msg.payload.decode('utf-8') == 'stop':
-            self.control.emit('stop')
+            self.control.emit('stop') 
     def send_message(self,MacAddress,message):
-        
-        publish.single(
-          topic=f"Food/{MacAddress}/Camera",#Food/F05ECD2ABE8D/Camera
-          payload= message,
-          hostname="114.34.73.26",
-          
-          port=1883,
-          auth={'username':'utl_food','password':'utl2041'})
+        try:
+            publish.single(
+                topic=f"Food/Camera",#Food/F05ECD2ABE8D/Camera
+                payload= message,
+                hostname="114.34.73.26",
+                port=1883,
+                auth={'username':'utl_food','password':'utl2041'})
+
+            print(f'mqtt send message successful, Message: {message}')
+
+        except Exception as e:
+            print('mqtt send message error!!')
     def killThread(self):
         self.wait()
         self.client.disconnect()

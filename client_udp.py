@@ -27,6 +27,9 @@ class Uart_Read:
         self.state = 0 #用來鎖定相機觸發
         self.mqtt = MQTTMOD()
         self.mqtt.start()
+
+        self.area1_count = 0
+        self.area2_count = 0
     def run(self):
         while True:
             try:
@@ -36,28 +39,65 @@ class Uart_Read:
                     ser.write(uart_write_data.decode('hex'))
 
                 packet = decode_data(data)
-                print(len(packet))
+                # print(len(packet))
                 if len(packet) == 233:                      # 辨識封包是否為手環封包
                     json_pakage = self.decode_json(packet)
                     if self.if_upload == True :
                         """"""
-
                     area_position = json_pakage["Area"]
                     posture = json_pakage["Posture_state"]
                     safe_mac = json_pakage["safe_Mac"]
-                    press = json_pakage["tmp"]
-                    print("="*10)
-                    print(f"Posture:{posture}"+"="*5+f"Area:{area_position}"+"="*5+f"Mac:{safe_mac}"+f"Press_16:{press}")
-                    if area_position == 1 and posture == 1 and self.state == 0:# 
-                        self.mqtt.send_message(safe_mac,"shot")
-                        self.state = 1 # 將狀態切換至用餐
-                        print("用餐")
-                        
-                    elif posture == 2 and self.state == 1:
-                        """"""
-                        self.mqtt.send_message(safe_mac,"stop")
-                        self.state = 0 #將狀態切換至結束
-                        print("結束")
+                    tmp = json_pakage["Ambient temperature"]
+                    press = json_pakage["Press_16"]
+                    rssi = json_pakage['RSSI']
+                    acc_x = json_pakage['ACC_X']
+                    acc_y = json_pakage['ACC_Y']
+                    acc_z = json_pakage['ACC_Z']
+                    roll = json_pakage["roll16"]
+                    pitch = json_pakage["pitch16"]
+                    yaw = json_pakage["yaw16"]
+                    mag_x = json_pakage['MAG_X']
+                    mag_y = json_pakage['MAG_Y']
+                    mag_z = json_pakage['MAG_Z']
+
+                    # Mac = "E8AB38E4A74F"
+                    Mac = "CCA50A702DBB"
+
+                    if sorted(safe_mac) == sorted(Mac):
+                        print("="*10)
+                        print(f"ACC_X:{acc_x}"+"="*5
+                              +f"ACC_Y:{acc_y}"+"="*5
+                              +f"ACC_Z:{acc_z}"+"="*5
+                              +f"roll:{roll}"+"="*5
+                              +f"pitch:{pitch}"+"="*5
+                              +f"yaw:{yaw}"+"="*5
+                              +f"MAG_Z:{mag_x}"+"="*5
+                              +f"MAG_Z:{mag_y}"+"="*5
+                              +f"MAG_Z:{mag_z}"+"="*5
+                              )
+                        # print(f"Area:{area_position}"+"="*5+f"Mac:{safe_mac}"+"="*5+f"Posture:{posture}")
+                        # print(f"Posture:{posture}"+"="*5+f"Area:{area_position}"+"="*5+f"Mac:{safe_mac}"+"="*5+f"tmp:{tmp}")
+
+                        if area_position == 1:
+                            self.area1_count += 1
+                            print(f"area1_count:{self.area1_count}")
+                            if area_position == 1 and self.state == 0 and self.area1_count >= 3:
+                                self.mqtt.send_message(safe_mac,"shot") 
+                                self.state = 1 # 將狀態切換至用餐
+                                print("用餐")
+                                self.area2_count = 0
+                                print(f"area2_1_count:{self.area2_count}")
+
+                        elif area_position == 2:
+                            self.area2_count += 1    
+                            print(f"area2_count:{self.area2_count}")
+                            if area_position == 2 and self.state == 1 and self.area2_count >= 3:
+                                """"""
+                                self.mqtt.send_message(safe_mac,"stop")
+                                self.state = 0 #將狀態切換至結束
+                                print("結束")
+                                self.area1_count = 0
+                                print(f"area1_1_count:{self.area1_count}")
 
                     time.sleep(.03)
             except Exception as e:
@@ -95,7 +135,7 @@ class Uart_Read:
     def decode_json(self,indata):
         """"""
         raw_data = indata
-        
+
         band_Mac = raw_data[5:17]
         safe_Mac = raw_data[189:201]
         state = int(raw_data[97:99],16) # 1為舊手環, 2為新手環, 3為蓋德
@@ -150,7 +190,7 @@ class Uart_Read:
             'MAG_Y' : self.twosComplement_hex(raw_data[153:157]),
             'MAG_Z' : self.twosComplement_hex(raw_data[157:161]),
             'MAG_total' : self.twosComplement_hex(raw_data[161:165]),
-            'Press_16' : (self.twosComplement_hex(raw_data[165:169])+80000),
+            'Press_16' : (self.twosComplement_hex(raw_data[165:169])+80000)/100,
             'Ambient temperature' : self.twosComplement_hex(raw_data[169:173])*0.0625, #環境溫度
             'Azimuth16' : self.twosComplement_hex(raw_data[175:179]),
             'Direction' : int(raw_data[179:181],16), #方位
