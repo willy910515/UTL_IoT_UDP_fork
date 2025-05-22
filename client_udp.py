@@ -1,3 +1,6 @@
+#main code
+
+#add date(Y_M_D_H_M_S), save to .txt
 import serial
 import queue
 import time
@@ -7,15 +10,15 @@ from mqttMod import MQTTMOD
 ser = serial.Serial('/dev/ttyAMA0', 115200)    #Open port with baud rate
 uart_read_queue = queue.Queue(maxsize=50)
 uart_write_queue = queue.Queue()
-HOST = '114.34.73.26' #serverIP
-PORT = 8001 #server port
+HOST = '114.32.77.107' #serverIP 
+PORT = 8000 #server port
 server_addr = (HOST, PORT)
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def decode_data(data):
     clear_data = data[:]
     now = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=8)))
-    packet = clear_data + str(datetime.datetime.utcnow() + datetime.timedelta(hours = 8)) + 'r1' 
+    packet = clear_data + str(datetime.datetime.utcnow() + datetime.timedelta(hours = 8)) + 'r9' 
     return packet
 
 class Uart_Read:
@@ -37,11 +40,14 @@ class Uart_Read:
                 if (uart_write_queue.qsize() > 0):
                     uart_write_data = uart_write_queue.get()
                     ser.write(uart_write_data.decode('hex'))
-
+            
                 packet = decode_data(data)
+                print("="*10+"start")
+                print(packet)
                 # print(len(packet))
                 if len(packet) == 233:                      # 辨識封包是否為手環封包
                     json_pakage = self.decode_json(packet)
+                    s.sendto(packet.encode(), server_addr)
                     if self.if_upload == True :
                         """"""
                     area_position = json_pakage["Area"]
@@ -60,49 +66,52 @@ class Uart_Read:
                     mag_y = json_pakage['MAG_Y']
                     mag_z = json_pakage['MAG_Z']
 
-                    # Mac = "E8AB38E4A74F"
-                    Mac = "CCA50A702DBB"
+                    # Mac1 = "FCA89B57D8BE" #Mac of old_safe_device for TI
+                    # Mac2 = "D34F0197CB78" #Mac of safe_device for Nordic
+                    Mac3 = "EAC5BC8732A7" #Mac of newest_safe_device for Nordic
+                    Mac4 = "C06EAC5BF9B0" #
 
-                    if sorted(safe_mac) == sorted(Mac):
+                    if sorted(safe_mac) == sorted(Mac3) or sorted(Mac4): # or sorted(safe_mac) == sorted(Mac3):
                         print("="*10)
-                        print(f"ACC_X:{acc_x}"+"="*5
-                              +f"ACC_Y:{acc_y}"+"="*5
-                              +f"ACC_Z:{acc_z}"+"="*5
-                              +f"roll:{roll}"+"="*5
-                              +f"pitch:{pitch}"+"="*5
-                              +f"yaw:{yaw}"+"="*5
-                              +f"MAG_Z:{mag_x}"+"="*5
-                              +f"MAG_Z:{mag_y}"+"="*5
-                              +f"MAG_Z:{mag_z}"+"="*5
-                              )
+                        print(f"ACC_X:{acc_x}"+"\n" #f"ACC_X:{acc_x}"+"="*5 #Original format
+                              +f"ACC_Y:{acc_y}"+"\n"
+                              +f"ACC_Z:{acc_z}"+"\n"
+                              +f"roll:{roll}"+"\n"
+                              +f"pitch:{pitch}"+"\n"
+                              +f"yaw:{yaw}"+"\n"
+                              +f"MAG_X:{mag_x}"+"\n"
+                              +f"MAG_Y:{mag_y}"+"\n"
+                              +f"MAG_Z:{mag_z}"+"\n"
+                              +f"posture:{posture}")
+                        print("="*10+"end")
                         # print(f"Area:{area_position}"+"="*5+f"Mac:{safe_mac}"+"="*5+f"Posture:{posture}")
                         # print(f"Posture:{posture}"+"="*5+f"Area:{area_position}"+"="*5+f"Mac:{safe_mac}"+"="*5+f"tmp:{tmp}")
 
                         if area_position == 1:
                             self.area1_count += 1
                             print(f"area1_count:{self.area1_count}")
-                            if area_position == 1 and self.state == 0 and self.area1_count >= 3:
+                            if posture == 1 and self.state == 0 and self.area1_count >= 3:
                                 self.mqtt.send_message(safe_mac,"shot") 
                                 self.state = 1 # 將狀態切換至用餐
                                 print("用餐")
                                 self.area2_count = 0
                                 print(f"area2_1_count:{self.area2_count}")
 
-                        elif area_position == 2:
+                        elif area_position != 1:
                             self.area2_count += 1    
                             print(f"area2_count:{self.area2_count}")
-                            if area_position == 2 and self.state == 1 and self.area2_count >= 3:
-                                """"""
-                                self.mqtt.send_message(safe_mac,"stop")
-                                self.state = 0 #將狀態切換至結束
-                                print("結束")
-                                self.area1_count = 0
-                                print(f"area1_1_count:{self.area1_count}")
+                            if posture == 2 and self.state == 1 and self.area2_count >= 3:
+                                if sorted(safe_mac) == sorted(Mac3) and sorted(Mac4):
+                                    self.mqtt.send_message(safe_mac,"stop") 
+                                    self.state = 0 #將狀態切換至結束
+                                    print("結束")
+                                    self.area1_count = 0
+                                    print(f"area1_1_count:{self.area1_count}")
 
                     time.sleep(.03)
             except Exception as e:
                 print(e)
-    # 緊急封包判斷
+     # 緊急封包判斷
     def judgeState(self,raw_data):
         if raw_data[0:3] == '$0C': #一般封包$0C
             safe_sos = 0
@@ -190,7 +199,7 @@ class Uart_Read:
             'MAG_Y' : self.twosComplement_hex(raw_data[153:157]),
             'MAG_Z' : self.twosComplement_hex(raw_data[157:161]),
             'MAG_total' : self.twosComplement_hex(raw_data[161:165]),
-            'Press_16' : (self.twosComplement_hex(raw_data[165:169])+80000)/100,
+            'Press_16' : self.twosComplement_hex(raw_data[165:169]), # (+80000)/100
             'Ambient temperature' : self.twosComplement_hex(raw_data[169:173])*0.0625, #環境溫度
             'Azimuth16' : self.twosComplement_hex(raw_data[175:179]),
             'Direction' : int(raw_data[179:181],16), #方位
